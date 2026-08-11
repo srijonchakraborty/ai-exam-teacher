@@ -17,7 +17,7 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 import { MdDocument, FlashcardSet, Flashcard } from "@/lib/firebase/types";
-import { generateFlashcardsFromMarkdown, fetchAvailableModels, DEFAULT_FREE_MODEL } from "@/lib/puter";
+import { DEFAULT_FREE_MODEL } from "@/lib/puter";
 
 export default function FlashcardsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: mdDocId } = use(params);
@@ -54,8 +54,9 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
           setCardSet({ id: firstDoc.id, ...firstDoc.data() } as FlashcardSet);
         }
 
-        const available = await fetchAvailableModels();
-        setModelsList(available);
+        const modelRes = await fetch("/api/ai/models");
+        const modelData = await modelRes.json();
+        if (modelData.models) setModelsList(modelData.models);
       } catch (err) {
         console.error("Error loading flashcard data:", err);
       } finally {
@@ -71,7 +72,17 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
     setError(null);
 
     try {
-      const cardsData = await generateFlashcardsFromMarkdown(docData.markdown, selectedModel);
+      // Call Server-side API endpoint /api/ai/flashcards
+      const aiRes = await fetch("/api/ai/flashcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markdown: docData.markdown, model: selectedModel }),
+      });
+
+      const aiData = await aiRes.json();
+      if (!aiRes.ok) throw new Error(aiData.error || "Server AI generation failed");
+
+      const cardsData: Array<{ front: string; back: string; tags?: string[] }> = aiData.cards;
       
       const newCards: Flashcard[] = cardsData.map((c, idx) => ({
         id: `card_${idx}_${Date.now()}`,
@@ -96,7 +107,7 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
       setIsFlipped(false);
     } catch (err: any) {
       console.error("Flashcard generation failed:", err);
-      setError(err.message || "Failed to generate flashcards.");
+      setError(err.message || "Failed to generate flashcards via server endpoint.");
     } finally {
       setGenerating(false);
     }
@@ -143,12 +154,19 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
         </div>
       )}
 
+      {generating && (
+        <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs flex items-center gap-3 font-semibold animate-pulse">
+          <span className="animate-spin text-indigo-400">⚡</span>
+          <span>Backend Server AI Processing: Generating Flashcards Deck...</span>
+        </div>
+      )}
+
       {!cardSet ? (
         <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl space-y-4 p-8">
           <div className="text-4xl">🃏</div>
           <h2 className="text-xl font-bold text-white">No Flashcards Yet</h2>
           <p className="text-slate-400 text-sm max-w-md mx-auto">
-            Click below to generate a flashcard deck using Puter.js AI.
+            Click below to trigger server-side Puter / AI flashcard deck generation.
           </p>
           <button
             onClick={() => handleGenerate(false)}

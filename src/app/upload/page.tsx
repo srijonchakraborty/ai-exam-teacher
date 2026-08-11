@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractTextFromPdf } from "@/lib/pdf";
-import { generateMarkdownFromText } from "@/lib/puter";
 import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/authContext";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -14,8 +13,8 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"idle" | "extracting" | "server-ai" | "saving">("idle");
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
-  const [statusText, setStatusText] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,20 +31,32 @@ export default function UploadPage() {
     if (!file) return;
     setLoading(true);
     setError(null);
-    setStatusText("Extracting PDF text layer...");
+    setStep("extracting");
 
     try {
+      // Step 1: Local PDF text layer extraction
       const { pages, totalPages, hasOcrFallback } = await extractTextFromPdf(
         file,
         (current, total) => setProgress({ current, total })
       );
 
-      setStatusText("Synthesizing extracted content with Puter.js AI...");
       const fullRawText = pages.map((p) => `--- Page ${p.pageNum} ---\n${p.nativeText}`).join("\n\n");
-      
-      const markdown = await generateMarkdownFromText(fullRawText);
 
-      setStatusText("Saving Markdown document to Firestore...");
+      // Step 2: Call Server-side API Route for Markdown Synthesis
+      setStep("server-ai");
+      const aiRes = await fetch("/api/ai/markdown", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: fullRawText, model: "gpt-5.4-nano" }),
+      });
+
+      const aiData = await aiRes.json();
+      if (!aiRes.ok) throw new Error(aiData.error || "Server AI processing failed");
+
+      const markdown = aiData.markdown;
+
+      // Step 3: Save to Firestore
+      setStep("saving");
       const docRef = await addDoc(collection(db, "mdDocuments"), {
         userId: user ? user.uid : "anonymous",
         pdfName: file.name,
@@ -53,7 +64,7 @@ export default function UploadPage() {
         markdown: markdown.length > 900000 ? null : markdown,
         sourcePages: totalPages,
         ocrUsed: hasOcrFallback,
-        modelUsed: "gpt-5.4-nano",
+        modelUsed: aiData.modelUsed || "gpt-5.4-nano",
         status: "ready",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -62,9 +73,10 @@ export default function UploadPage() {
       router.push(`/doc/${docRef.id}`);
     } catch (err: any) {
       console.error("Upload error:", err);
-      setError(err.message || "An error occurred during PDF processing.");
+      setError(err.message || "An error occurred during backend PDF processing.");
     } finally {
       setLoading(false);
+      setStep("idle");
       setProgress(null);
     }
   };
@@ -72,9 +84,11 @@ export default function UploadPage() {
   return (
     <div className="max-w-2xl mx-auto bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Upload Exam / Study PDF</h1>
+        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <span>⚡ Backend PDF Processing</span>
+        </h1>
         <p className="text-slate-400 text-sm mt-1">
-          Select a PDF document to extract content and convert into clean Markdown.
+          PDF extraction and AI Markdown generation execute securely via backend API routes.
         </p>
       </div>
 
@@ -82,7 +96,7 @@ export default function UploadPage() {
         <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-sm flex items-center justify-between">
           <span>{error}</span>
           <button onClick={handleProcess} className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold">
-            Retry
+            Retry Task
           </button>
         </div>
       )}
@@ -113,13 +127,33 @@ export default function UploadPage() {
           />
         </div>
 
+        {/* Real-time Visual Step Progress Indicator */}
         {loading && (
-          <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
-            <p className="text-xs text-indigo-400 font-medium">{statusText}</p>
+          <div className="p-5 bg-slate-950 border border-indigo-500/30 rounded-xl space-y-4 shadow-inner">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+              <span className="flex items-center gap-2">
+                <span className="animate-spin text-indigo-400">⏳</span>
+                <span>Active Step: {step === "extracting" ? "Page Text Layer Parsing" : step === "server-ai" ? "Server-side Puter AI Synthesis" : "Saving to Database"}</span>
+              </span>
+              <span className="text-indigo-400 font-mono">Processing...</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase font-bold">
+              <div className={`p-2 rounded-lg border ${step === "extracting" ? "bg-indigo-600/20 border-indigo-500 text-indigo-300 animate-pulse" : "bg-slate-900 border-slate-800 text-slate-500"}`}>
+                1. Text Layer
+              </div>
+              <div className={`p-2 rounded-lg border ${step === "server-ai" ? "bg-indigo-600/20 border-indigo-500 text-indigo-300 animate-pulse" : "bg-slate-900 border-slate-800 text-slate-500"}`}>
+                2. Server AI
+              </div>
+              <div className={`p-2 rounded-lg border ${step === "saving" ? "bg-indigo-600/20 border-indigo-500 text-indigo-300 animate-pulse" : "bg-slate-900 border-slate-800 text-slate-500"}`}>
+                3. Save Guide
+              </div>
+            </div>
+
             {progress && (
               <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-indigo-500 h-full transition-all duration-300"
+                  className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full transition-all duration-300"
                   style={{ width: `${(progress.current / progress.total) * 100}%` }}
                 />
               </div>
@@ -130,9 +164,9 @@ export default function UploadPage() {
         <button
           onClick={handleProcess}
           disabled={!file || loading}
-          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg transition-all text-sm"
+          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg transition-all text-sm flex items-center justify-center gap-2"
         >
-          {loading ? "Processing Document..." : "Start Extraction"}
+          {loading ? "Backend Processing Active..." : "Start Server Extraction"}
         </button>
       </div>
     </div>
