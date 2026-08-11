@@ -43,12 +43,13 @@ Format per ticket: `[label] Title — one-line acceptance criteria summary (full
 
 ## Epic I — Bug Fixes & Hotfixes
 29. `[backend/frontend]` Fix Firebase storing, storage overflow (>900KB), and Firestore auth rules compliance (see `docs/tickets/TICKET-29-FIREBASE-STORING-FIX.md`).
+35. `[docs/infra]` Create end-to-end Project Flow architecture diagram and comprehensive root README.md (see `docs/tickets/TICKET-35-PROJECT-FLOW-README.md`).
 
 ---
 ### Suggested ticket → agent label mapping
 - `backend`: 2,5,7,8,9,11,12,14,17,18,21,24,29
 - `frontend`: 6,10,13,15,16,19,20,29
 - `testing`: 22,23,29
-- `infra`/`docs`: 1,3,4,26,27,28 (do these yourself or with Git Agent before turning the loop on)
-- `reviewer`: 25,29 (also implicitly reviews every PR from B onward)
+- `infra`/`docs`: 1,3,4,26,27,28,35 (do these yourself or with Git Agent before turning the loop on)
+- `reviewer`: 25,29,35 (also implicitly reviews every PR from B onward)
 
