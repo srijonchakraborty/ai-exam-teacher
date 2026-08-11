@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mdDocuments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "flashcardSets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mdDocId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
