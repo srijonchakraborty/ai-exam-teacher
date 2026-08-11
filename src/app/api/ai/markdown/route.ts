@@ -48,8 +48,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ markdown, modelUsed: model });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error in /api/ai/markdown:", err);
-    return NextResponse.json({ error: err.message || "Failed to process Markdown on server" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Failed to process Markdown on server";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

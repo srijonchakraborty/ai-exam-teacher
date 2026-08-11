@@ -27,7 +27,7 @@ export async function extractTextFromPdf(file: File, onProgress?: (current: numb
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
     const pageText = textContent.items
-      .map((item: any) => item.str)
+      .map((item) => (item as Record<string, unknown>).str || "")
       .join(" ")
       .trim();
 

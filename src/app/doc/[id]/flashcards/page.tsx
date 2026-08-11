@@ -2,20 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/authContext";
-import { 
-  doc, 
-  getDoc, 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  getDocs, 
-  addDoc, 
-  serverTimestamp 
-} from "firebase/firestore";
+import { getMdDocument, getLatestFlashcardSet, saveFlashcardSet } from "@/lib/firebase/store";
 import { MdDocument, FlashcardSet, Flashcard } from "@/lib/firebase/types";
 import { DEFAULT_FREE_MODEL } from "@/lib/puter";
 
@@ -36,22 +24,12 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     async function loadData() {
       try {
-        const mdSnap = await getDoc(doc(db, "mdDocuments", mdDocId));
-        if (mdSnap.exists()) {
-          setDocData({ id: mdSnap.id, ...mdSnap.data() } as MdDocument);
-        }
+        const item = await getMdDocument(mdDocId);
+        if (item) setDocData(item);
 
-        const q = query(
-          collection(db, "flashcardSets"),
-          where("mdDocId", "==", mdDocId),
-          where("userId", "==", user ? user.uid : "anonymous"),
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
-        const setSnap = await getDocs(q);
-        if (!setSnap.empty) {
-          const firstDoc = setSnap.docs[0];
-          setCardSet({ id: firstDoc.id, ...firstDoc.data() } as FlashcardSet);
+        if (user) {
+          const setItem = await getLatestFlashcardSet(mdDocId, user.uid);
+          if (setItem) setCardSet(setItem);
         }
 
         const modelRes = await fetch("/api/ai/models");
@@ -68,6 +46,10 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
 
   const handleGenerate = async (isRegen = false) => {
     if (!docData || !docData.markdown) return;
+    if (!user) {
+      setError("Authentication required: Please sign in to generate and save flashcard decks.");
+      return;
+    }
     setGenerating(true);
     setError(null);
 
@@ -90,23 +72,32 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
         tags: c.tags || [],
       }));
 
-      const newSetData = {
+      const isPaid = !selectedModel.includes("nano") && !selectedModel.includes("flash");
+      const setId = await saveFlashcardSet({
         mdDocId,
-        userId: user ? user.uid : "anonymous",
+        userId: user.uid,
         model: selectedModel,
-        isPaidModel: !selectedModel.includes("nano") && !selectedModel.includes("flash"),
+        isPaidModel: isPaid,
         cards: newCards,
         ...(isRegen && cardSet ? { regenerationOf: cardSet.id } : {}),
-        createdAt: serverTimestamp(),
-      };
+      });
 
-      const docRef = await addDoc(collection(db, "flashcardSets"), newSetData);
-      setCardSet({ id: docRef.id, ...newSetData, createdAt: null as any });
+      setCardSet({
+        id: setId,
+        mdDocId,
+        userId: user.uid,
+        model: selectedModel,
+        isPaidModel: isPaid,
+        cards: newCards,
+        ...(isRegen && cardSet ? { regenerationOf: cardSet.id } : {}),
+        createdAt: null as unknown as FlashcardSet["createdAt"],
+      });
       setActiveCardIndex(0);
       setIsFlipped(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Flashcard generation failed:", err);
-      setError(err.message || "Failed to generate flashcards via server endpoint.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate flashcards via server endpoint.";
+      setError(errorMessage);
     } finally {
       setGenerating(false);
     }

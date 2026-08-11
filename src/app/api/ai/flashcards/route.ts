@@ -60,8 +60,9 @@ ${markdown}`;
     }
 
     return NextResponse.json({ cards, modelUsed: model });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Error in /api/ai/flashcards:", err);
-    return NextResponse.json({ error: err.message || "Failed to generate flashcards on server" }, { status: 500 });
+    const message = err instanceof Error ? err.message : "Failed to generate flashcards on server";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

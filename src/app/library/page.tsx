@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/authContext";
-import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { getMdDocumentsByUser } from "@/lib/firebase/store";
 import { MdDocument } from "@/lib/firebase/types";
 
 export default function LibraryPage() {
@@ -14,17 +13,13 @@ export default function LibraryPage() {
 
   useEffect(() => {
     async function fetchDocs() {
+      if (!user) {
+        setDocs([]);
+        setLoading(false);
+        return;
+      }
       try {
-        const q = query(
-          collection(db, "mdDocuments"),
-          where("userId", "==", user ? user.uid : "anonymous"),
-          orderBy("createdAt", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-        const list: MdDocument[] = [];
-        querySnapshot.forEach((docSnap) => {
-          list.push({ id: docSnap.id, ...docSnap.data() } as MdDocument);
-        });
+        const list = await getMdDocumentsByUser(user.uid);
         setDocs(list);
       } catch (err) {
         console.error("Error fetching library:", err);

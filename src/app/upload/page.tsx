@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { extractTextFromPdf } from "@/lib/pdf";
-import { db } from "@/lib/firebase/config";
 import { useAuth } from "@/lib/firebase/authContext";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { saveMdDocument } from "@/lib/firebase/store";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -29,6 +28,11 @@ export default function UploadPage() {
 
   const handleProcess = async () => {
     if (!file) return;
+    if (!user) {
+      setError("Authentication required: Please sign in with your account to save study guides to Firebase.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setStep("extracting");
@@ -55,25 +59,23 @@ export default function UploadPage() {
 
       const markdown = aiData.markdown;
 
-      // Step 3: Save to Firestore
+      // Step 3: Save to Firestore / Storage via store service
       setStep("saving");
-      const docRef = await addDoc(collection(db, "mdDocuments"), {
-        userId: user ? user.uid : "anonymous",
+      const docId = await saveMdDocument({
+        userId: user.uid,
         pdfName: file.name,
         userTitle: title || file.name,
-        markdown: markdown.length > 900000 ? null : markdown,
+        markdown,
         sourcePages: totalPages,
         ocrUsed: hasOcrFallback,
         modelUsed: aiData.modelUsed || "gpt-4o-mini",
-        status: "ready",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
 
-      router.push(`/doc/${docRef.id}`);
-    } catch (err: any) {
+      router.push(`/doc/${docId}`);
+    } catch (err: unknown) {
       console.error("Upload error:", err);
-      setError(err.message || "An error occurred during backend PDF processing.");
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during backend PDF processing.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setStep("idle");

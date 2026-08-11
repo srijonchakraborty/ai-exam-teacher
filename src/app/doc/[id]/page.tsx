@@ -2,8 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { db } from "@/lib/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { getMdDocument } from "@/lib/firebase/store";
 import { MdDocument } from "@/lib/firebase/types";
 
 export default function DocumentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,11 +13,8 @@ export default function DocumentPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     async function fetchDoc() {
       try {
-        const docRef = doc(db, "mdDocuments", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setDocData({ id: docSnap.id, ...docSnap.data() } as MdDocument);
-        }
+        const item = await getMdDocument(id);
+        setDocData(item);
       } catch (err) {
         console.error("Error fetching document:", err);
       } finally {

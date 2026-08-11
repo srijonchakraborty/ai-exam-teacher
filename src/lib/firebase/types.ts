@@ -6,7 +6,8 @@ export interface MdDocument {
   pdfName: string;
   userTitle: string;
   markdown: string | null;
-  markdownStorageUrl?: string;
+  markdownStorageUrl?: string | null;
+  storagePath?: string | null;
   sourcePages: number;
   ocrUsed: boolean;
   modelUsed: string;

@@ -41,15 +41,14 @@ Format per ticket: `[label] Title — one-line acceptance criteria summary (full
 24. `[backend]` `firestore.rules` per `02-DATA-MODEL.md`, deploy + rule unit tests (Firebase emulator).
 25. `[reviewer]` Security pass: confirm no Puter/Firebase secrets committed, confirm all Firestore access scoped to `request.auth.uid`.
 
-## Epic H — Agent-team bootstrap (meta, run once)
-26. `[infra]` Create GitHub Project board + labels + issue template (doc 04).
-27. `[infra]` Configure Antigravity CLI subagents + GitHub MCP server (doc 06).
-28. `[infra]` Bulk-create tickets 1–25 on the board from this file.
+## Epic I — Bug Fixes & Hotfixes
+29. `[backend/frontend]` Fix Firebase storing, storage overflow (>900KB), and Firestore auth rules compliance (see `docs/tickets/TICKET-29-FIREBASE-STORING-FIX.md`).
 
 ---
 ### Suggested ticket → agent label mapping
-- `backend`: 2,5,7,8,9,11,12,14,17,18,21,24
-- `frontend`: 6,10,13,15,16,19,20
-- `testing`: 22,23
+- `backend`: 2,5,7,8,9,11,12,14,17,18,21,24,29
+- `frontend`: 6,10,13,15,16,19,20,29
+- `testing`: 22,23,29
 - `infra`/`docs`: 1,3,4,26,27,28 (do these yourself or with Git Agent before turning the loop on)
-- `reviewer`: 25 (also implicitly reviews every PR from B onward)
+- `reviewer`: 25,29 (also implicitly reviews every PR from B onward)
+
