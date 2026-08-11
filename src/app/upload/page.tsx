@@ -8,7 +8,7 @@ import { saveMdDocument } from "@/lib/firebase/store";
 
 export default function UploadPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
@@ -95,12 +95,57 @@ export default function UploadPage() {
         </p>
       </div>
 
-      {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-2xl text-xs flex items-center justify-between shadow-lg">
-          <span>⚠️ {error}</span>
-          <button onClick={handleProcess} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-semibold transition-all">
-            Retry Task
+      {!user && !error && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl text-xs flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <span className="flex items-center gap-2">
+            <span>🔐</span>
+            <span>Authentication required: Please sign in with your account to save study guides to Firebase.</span>
+          </span>
+          <button
+            onClick={async () => {
+              try {
+                await signInWithGoogle();
+              } catch (e) {
+                console.error("Sign in failed:", e);
+              }
+            }}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all shrink-0 text-xs shadow-md flex items-center gap-1.5"
+          >
+            <span>Sign in with Google</span>
           </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-2xl text-xs flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <span className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {!user || error.includes("Authentication required") ? (
+              <button
+                onClick={async () => {
+                  try {
+                    await signInWithGoogle();
+                    setError(null);
+                  } catch (e) {
+                    console.error("Sign in failed:", e);
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all text-xs shadow-md flex items-center gap-1.5"
+              >
+                🔐 Sign in with Google
+              </button>
+            ) : (
+              <button
+                onClick={handleProcess}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-semibold transition-all text-xs shadow-md"
+              >
+                Retry Task
+              </button>
+            )}
+          </div>
         </div>
       )}
 

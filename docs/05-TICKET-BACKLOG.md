@@ -44,6 +44,7 @@ Format per ticket: `[label] Title — one-line acceptance criteria summary (full
 ## Epic I — Bug Fixes & Hotfixes
 29. `[backend/frontend]` Fix Firebase storing, storage overflow (>900KB), and Firestore auth rules compliance (see `docs/tickets/TICKET-29-FIREBASE-STORING-FIX.md`).
 35. `[docs/infra]` Create end-to-end Project Flow architecture diagram and comprehensive root README.md (see `docs/tickets/TICKET-35-PROJECT-FLOW-README.md`).
+40. `[frontend/auth]` Resolve "Authentication required: Please sign in with your account to save study guides to Firebase." issue (see `docs/tickets/TICKET-40-AUTHENTICATION-REQUIRED-SAVE-STUDY-GUIDES.md`).
 
 ## Epic J — Future Roadmap & Features (Todo Queue)
 36. `[feature]` Talk with PDF — Direct Interactive PDF Chat & Question Answering (see `docs/tickets/TICKET-36-TALK-WITH-PDF.md`).

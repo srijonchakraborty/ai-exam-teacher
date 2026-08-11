@@ -9,7 +9,7 @@ import { DEFAULT_FREE_MODEL } from "@/lib/puter";
 
 export default function FlashcardsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: mdDocId } = use(params);
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   
   const [docData, setDocData] = useState<MdDocument | null>(null);
   const [cardSet, setCardSet] = useState<FlashcardSet | null>(null);
@@ -138,11 +138,35 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-2xl text-xs flex items-center justify-between shadow-lg">
-          <span>⚠️ {error}</span>
-          <button onClick={() => handleGenerate(!!cardSet)} className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-xl font-semibold">
-            Retry Task
-          </button>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-2xl text-xs flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <span className="flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            {!user || error.includes("Authentication required") ? (
+              <button
+                onClick={async () => {
+                  try {
+                    await signInWithGoogle();
+                    setError(null);
+                  } catch (e) {
+                    console.error("Sign in failed:", e);
+                  }
+                }}
+                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all text-xs shadow-md flex items-center gap-1.5"
+              >
+                🔐 Sign in with Google
+              </button>
+            ) : (
+              <button
+                onClick={() => handleGenerate(!!cardSet)}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-semibold transition-all text-xs shadow-md"
+              >
+                Retry Task
+              </button>
+            )}
+          </div>
         </div>
       )}
 
