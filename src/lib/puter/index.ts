@@ -35,6 +35,32 @@ export async function ensurePuterAuth(): Promise<boolean> {
   return true;
 }
 
+export async function fetchAvailableModels(): Promise<Array<{ id: string; name: string }>> {
+  const fallbackModels = [
+    { id: "gpt-5.4-nano", name: "GPT 5.4 Nano (Free)" },
+    { id: "google/gemini-3.6-flash", name: "Gemini 3.6 Flash (Free)" },
+    { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5 (Paid)" },
+  ];
+
+  if (typeof window === "undefined" || !window.puter || !window.puter.ai.listModels) {
+    return fallbackModels;
+  }
+
+  try {
+    const models = await window.puter.ai.listModels();
+    if (models && models.length > 0) {
+      return models.map((m) => ({
+        id: m.id,
+        name: m.name || m.id,
+      }));
+    }
+  } catch (err) {
+    console.warn("Using fallback models due to error fetching models:", err);
+  }
+
+  return fallbackModels;
+}
+
 export async function generateMarkdownFromText(extractedText: string, model: string = DEFAULT_FREE_MODEL): Promise<string> {
   if (typeof window === "undefined" || !window.puter) {
     throw new Error("Puter.js client library is unavailable.");
@@ -64,8 +90,11 @@ Markdown content:
 ${markdownContent}`;
 
   const response = await window.puter.ai.chat(prompt, { model });
-  const rawText = typeof response === "string" ? response : response?.message?.content || "";
+  let rawText = typeof response === "string" ? response : response?.message?.content || "";
   
+  // Clean markdown code blocks if present (```json ... ```)
+  rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
   try {
     const jsonMatch = rawText.match(/\[[\s\S]*\]/);
     if (jsonMatch) {

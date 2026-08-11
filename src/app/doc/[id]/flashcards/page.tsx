@@ -17,7 +17,7 @@ import {
   serverTimestamp 
 } from "firebase/firestore";
 import { MdDocument, FlashcardSet, Flashcard } from "@/lib/firebase/types";
-import { generateFlashcardsFromMarkdown, DEFAULT_FREE_MODEL } from "@/lib/puter";
+import { generateFlashcardsFromMarkdown, fetchAvailableModels, DEFAULT_FREE_MODEL } from "@/lib/puter";
 
 export default function FlashcardsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: mdDocId } = use(params);
@@ -27,6 +27,7 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
   const [cardSet, setCardSet] = useState<FlashcardSet | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [modelsList, setModelsList] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedModel, setSelectedModel] = useState(DEFAULT_FREE_MODEL);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -52,6 +53,9 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
           const firstDoc = setSnap.docs[0];
           setCardSet({ id: firstDoc.id, ...firstDoc.data() } as FlashcardSet);
         }
+
+        const available = await fetchAvailableModels();
+        setModelsList(available);
       } catch (err) {
         console.error("Error loading flashcard data:", err);
       } finally {
@@ -121,9 +125,11 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
             onChange={(e) => setSelectedModel(e.target.value)}
             className="bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none"
           >
-            <option value="gpt-5.4-nano">GPT 5.4 Nano (Free)</option>
-            <option value="google/gemini-3.6-flash">Gemini 3.6 Flash (Free)</option>
-            <option value="anthropic/claude-sonnet-5">Claude Sonnet 5 (Paid)</option>
+            {modelsList.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
