@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { markdown, model = "gpt-5.4-nano" } = await req.json();
+    const { markdown, model = "gpt-4o-mini" } = await req.json();
 
     if (!markdown) {
       return NextResponse.json({ error: "Markdown content is required" }, { status: 400 });
@@ -22,24 +22,34 @@ ${markdown}`;
     let cards: Array<{ front: string; back: string; tags?: string[] }> = [];
 
     if (apiKey) {
-      const res = await fetch("https://api.puter.com/v2/ai/chat", {
+      const res = await fetch("https://api.puter.com/drivers/call", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt, model }),
+        body: JSON.stringify({
+          interface: "puter-chat-completion",
+          method: "complete",
+          args: {
+            messages: [{ role: "user", content: prompt }],
+            model: model || "gpt-4o-mini",
+          },
+        }),
       });
-      const data = await res.json();
-      let rawText = data?.message?.content || data?.result || "";
-      rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
-      const match = rawText.match(/\[[\s\S]*\]/);
-      if (match) {
-        cards = JSON.parse(match[0]);
+
+      if (res.ok) {
+        const data = await res.json();
+        let rawText = data?.result?.message?.content || "";
+        rawText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+        const match = rawText.match(/\[[\s\S]*\]/);
+        if (match) {
+          cards = JSON.parse(match[0]);
+        }
       }
     }
 
-    // Fallback card generator if API key is not set yet
+    // Fallback card generator if key is unset
     if (cards.length === 0) {
       const lines = markdown.split("\n").filter((l: string) => l.trim().length > 5);
       cards = lines.slice(0, 10).map((line: string, i: number) => ({

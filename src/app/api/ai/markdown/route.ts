@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { text, model = "gpt-5.4-nano" } = await req.json();
+    const { text, model = "gpt-4o-mini" } = await req.json();
 
     if (!text) {
       return NextResponse.json({ error: "Extracted document text is required" }, { status: 400 });
@@ -10,25 +10,34 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.PUTER_API_KEY || process.env.OPENAI_API_KEY;
 
-    // Puter REST API or AI fallback synthesis
     const prompt = `Convert the following extracted document text into clean, structured Markdown. Retain key headings, lists, bullet points, and main technical concepts:\n\n${text}`;
 
     let markdown = "";
 
     if (apiKey) {
-      const res = await fetch("https://api.puter.com/v2/ai/chat", {
+      const res = await fetch("https://api.puter.com/drivers/call", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ prompt, model }),
+        body: JSON.stringify({
+          interface: "puter-chat-completion",
+          method: "complete",
+          args: {
+            messages: [{ role: "user", content: prompt }],
+            model: model || "gpt-4o-mini",
+          },
+        }),
       });
-      const data = await res.json();
-      markdown = data?.message?.content || data?.result || "";
+
+      if (res.ok) {
+        const data = await res.json();
+        markdown = data?.result?.message?.content || data?.result?.text || "";
+      }
     }
 
-    // Fallback if API key is not yet set or returns empty
+    // Fallback if key is missing or empty
     if (!markdown) {
       const sanitized = text
         .split("\n")
