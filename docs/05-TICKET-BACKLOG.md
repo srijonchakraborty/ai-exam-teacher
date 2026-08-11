@@ -45,11 +45,17 @@ Format per ticket: `[label] Title — one-line acceptance criteria summary (full
 29. `[backend/frontend]` Fix Firebase storing, storage overflow (>900KB), and Firestore auth rules compliance (see `docs/tickets/TICKET-29-FIREBASE-STORING-FIX.md`).
 35. `[docs/infra]` Create end-to-end Project Flow architecture diagram and comprehensive root README.md (see `docs/tickets/TICKET-35-PROJECT-FLOW-README.md`).
 
+## Epic J — Future Roadmap & Features (Todo Queue)
+36. `[feature]` Talk with PDF — Direct Interactive PDF Chat & Question Answering (see `docs/tickets/TICKET-36-TALK-WITH-PDF.md`).
+37. `[feature]` Chat with Markdown Study Guide & AI Tutor Assistant (see `docs/tickets/TICKET-37-CHAT-WITH-MARKDOWN.md`).
+38. `[frontend]` UI/UX Enhancements — Study Analytics Dashboard & Theme Switcher (see `docs/tickets/TICKET-38-ANALYTICS-AND-THEME.md`).
+39. `[feature]` Spaced Repetition (SM-2 Algorithm) & Quizzing Mode (see `docs/tickets/TICKET-39-SPACED-REPETITION-QUIZ.md`).
+
 ---
 ### Suggested ticket → agent label mapping
-- `backend`: 2,5,7,8,9,11,12,14,17,18,21,24,29
-- `frontend`: 6,10,13,15,16,19,20,29
-- `testing`: 22,23,29
-- `infra`/`docs`: 1,3,4,26,27,28,35 (do these yourself or with Git Agent before turning the loop on)
-- `reviewer`: 25,29,35 (also implicitly reviews every PR from B onward)
+- `backend`: 2,5,7,8,9,11,12,14,17,18,21,24,29,36,37,39
+- `frontend`: 6,10,13,15,16,19,20,29,36,37,38,39
+- `testing`: 22,23,29,36,37,38,39
+- `infra`/`docs`: 1,3,4,26,27,28,35
+- `reviewer`: 25,29,35,36,37,38,39 (also implicitly reviews every PR from B onward)
 
