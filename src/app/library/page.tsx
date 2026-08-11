@@ -36,53 +36,70 @@ export default function LibraryPage() {
   }, [user]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Your Study Library</h1>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            📚 Study Collection
+          </div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">Your Study Library</h1>
           <p className="text-slate-400 text-sm mt-1">
-            Access extracted Markdown study guides and flashcard sets.
+            Access your extracted Markdown study guides and flashcard decks.
           </p>
         </div>
         <Link
           href="/upload"
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all"
+          className="px-5 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-semibold rounded-2xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 self-start md:self-auto"
         >
-          + Upload New PDF
+          <span>+ Upload New PDF</span>
         </Link>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-500 text-sm">Loading library documents...</div>
+        <div className="text-center py-16 glass-card rounded-3xl text-slate-500 text-xs animate-pulse">
+          Loading library collection...
+        </div>
       ) : docs.length === 0 ? (
-        <div className="text-center py-16 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-3">
-          <p className="text-slate-400 font-medium">No study guides found</p>
-          <p className="text-slate-500 text-sm">Upload your first PDF to generate Markdown and flashcards.</p>
-          <Link href="/upload" className="inline-block mt-2 px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg">
-            Upload PDF
+        <div className="text-center py-20 glass-card rounded-3xl space-y-4 p-8 border border-dashed border-slate-800">
+          <div className="text-5xl">📖</div>
+          <h3 className="text-lg font-bold text-white">No Study Guides Found</h3>
+          <p className="text-slate-400 text-xs max-w-sm mx-auto">
+            Upload your first textbook chapter or PDF exam note to generate AI flashcards.
+          </p>
+          <Link
+            href="/upload"
+            className="inline-block mt-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg transition-all"
+          >
+            Upload PDF Now
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {docs.map((item) => (
             <Link
               key={item.id}
               href={`/doc/${item.id}`}
-              className="block p-5 bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl transition-all group"
+              className="glass-card glass-card-hover p-6 rounded-3xl space-y-4 group flex flex-col justify-between"
             >
-              <div className="flex justify-between items-start">
-                <h3 className="font-semibold text-slate-100 group-hover:text-indigo-400 transition-colors">
-                  {item.userTitle}
-                </h3>
-                <span className="text-xs px-2.5 py-1 bg-slate-800 text-slate-400 rounded-full">
-                  {item.sourcePages} pages
-                </span>
+              <div className="space-y-2">
+                <div className="flex justify-between items-start gap-2">
+                  <h3 className="font-bold text-slate-100 text-lg group-hover:text-indigo-300 transition-colors line-clamp-1">
+                    {item.userTitle}
+                  </h3>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20 shrink-0">
+                    {item.sourcePages} pages
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 truncate">📄 {item.pdfName}</p>
               </div>
-              <p className="text-xs text-slate-500 mt-2 truncate">File: {item.pdfName}</p>
-              <div className="flex items-center justify-between mt-4 text-xs text-slate-400 pt-3 border-t border-slate-800/60">
-                <span>Model: {item.modelUsed}</span>
-                <span className="text-indigo-400 font-medium group-hover:translate-x-0.5 transition-transform">
-                  Open Guide →
+
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-800/80">
+                <span className="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] font-mono">
+                  {item.modelUsed || "gpt-4o-mini"}
+                </span>
+                <span className="text-indigo-400 font-semibold group-hover:translate-x-1 transition-transform flex items-center gap-1 text-xs">
+                  <span>Open Study Guide</span>
+                  <span>→</span>
                 </span>
               </div>
             </Link>

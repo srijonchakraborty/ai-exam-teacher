@@ -72,7 +72,6 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
     setError(null);
 
     try {
-      // Call Server-side API endpoint /api/ai/flashcards
       const aiRes = await fetch("/api/ai/flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,27 +113,29 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-500 text-sm">Loading flashcards...</div>;
+    return <div className="text-center py-16 text-slate-500 text-xs animate-pulse">Loading flashcards deck...</div>;
   }
 
   const currentCard = cardSet?.cards[activeCardIndex];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-3xl mx-auto space-y-8">
+      {/* Top Header Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl">
         <div>
-          <Link href={`/doc/${mdDocId}`} className="text-xs text-indigo-400 font-medium hover:underline">
-            ← Back to Document
+          <Link href={`/doc/${mdDocId}`} className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider hover:underline">
+            ← Back to Guide
           </Link>
-          <h1 className="text-2xl font-bold text-white mt-1">Flashcard Deck</h1>
+          <h1 className="text-2xl font-extrabold text-white mt-1">Interactive Flashcard Deck</h1>
           <p className="text-slate-400 text-xs mt-0.5">{docData?.userTitle}</p>
         </div>
 
         <div className="flex items-center gap-3">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:block">Model</label>
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
-            className="bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2 focus:outline-none"
+            className="bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500 transition-all font-mono"
           >
             {modelsList.map((m) => (
               <option key={m.id} value={m.id}>
@@ -146,71 +147,110 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-sm flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => handleGenerate(!!cardSet)} className="px-3 py-1 bg-rose-600 text-white text-xs rounded-lg font-semibold">
-            Retry
+        <div className="p-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-2xl text-xs flex items-center justify-between shadow-lg">
+          <span>⚠️ {error}</span>
+          <button onClick={() => handleGenerate(!!cardSet)} className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded-xl font-semibold">
+            Retry Task
           </button>
         </div>
       )}
 
       {generating && (
-        <div className="p-4 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs flex items-center gap-3 font-semibold animate-pulse">
-          <span className="animate-spin text-indigo-400">⚡</span>
-          <span>Backend Server AI Processing: Generating Flashcards Deck...</span>
+        <div className="p-4 glass-card border border-indigo-500/30 text-indigo-300 rounded-2xl text-xs flex items-center gap-3 font-semibold animate-pulse shadow-lg">
+          <span className="animate-spin text-indigo-400 text-base">⚡</span>
+          <span>Server AI Generating Interactive Flashcard Deck...</span>
         </div>
       )}
 
       {!cardSet ? (
-        <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl space-y-4 p-8">
-          <div className="text-4xl">🃏</div>
-          <h2 className="text-xl font-bold text-white">No Flashcards Yet</h2>
-          <p className="text-slate-400 text-sm max-w-md mx-auto">
-            Click below to trigger server-side Puter / AI flashcard deck generation.
+        <div className="text-center py-20 glass-card rounded-3xl space-y-6 p-8 border border-dashed border-slate-800">
+          <div className="text-5xl">🃏</div>
+          <h2 className="text-2xl font-bold text-white">No Flashcard Deck Generated Yet</h2>
+          <p className="text-slate-400 text-xs max-w-md mx-auto leading-relaxed">
+            Click below to generate a quizzable flashcard set from your Markdown study guide using server AI.
           </p>
           <button
             onClick={() => handleGenerate(false)}
             disabled={generating}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg transition-all text-sm"
+            className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold rounded-2xl shadow-xl shadow-indigo-600/25 transition-all text-xs"
           >
-            {generating ? "Generating Deck..." : "Generate Flashcards"}
+            {generating ? "Generating Deck..." : "✨ Generate Flashcards Deck"}
           </button>
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Card Viewer */}
-          <div
-            onClick={() => setIsFlipped(!isFlipped)}
-            className="w-full min-h-[300px] bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-3xl p-8 flex flex-col justify-between cursor-pointer transition-all shadow-2xl select-none"
-          >
-            <div className="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider">
-              <span>Card {activeCardIndex + 1} of {cardSet.cards.length}</span>
-              <span className="text-indigo-400">{isFlipped ? "Answer / Back" : "Question / Front (Click to Flip)"}</span>
+          {/* Deck Progress Bar */}
+          <div className="flex items-center gap-4 text-xs text-slate-400 font-bold uppercase tracking-wider">
+            <span>Card {activeCardIndex + 1} / {cardSet.cards.length}</span>
+            <div className="flex-1 bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+              <div
+                className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full transition-all duration-300"
+                style={{ width: `${((activeCardIndex + 1) / cardSet.cards.length) * 100}%` }}
+              />
             </div>
+          </div>
 
-            <div className="my-auto py-8 text-center">
-              <p className={`text-xl md:text-2xl font-medium leading-relaxed ${isFlipped ? "text-indigo-300" : "text-slate-100"}`}>
-                {isFlipped ? currentCard?.back : currentCard?.front}
-              </p>
-            </div>
+          {/* 3D Flip Card Scene */}
+          <div className="perspective-1000 w-full min-h-[320px]">
+            <div
+              onClick={() => setIsFlipped(!isFlipped)}
+              className={`w-full min-h-[320px] glass-card glass-card-hover rounded-3xl p-8 md:p-10 flex flex-col justify-between cursor-pointer transform-style-3d relative ${
+                isFlipped ? "rotate-y-180" : ""
+              }`}
+            >
+              {/* Front Side */}
+              <div className={`flex flex-col justify-between h-full space-y-6 ${isFlipped ? "hidden" : "block"}`}>
+                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  <span>Question / Term</span>
+                  <span className="text-indigo-400 font-mono">Click to Flip ↺</span>
+                </div>
 
-            <div className="flex justify-between items-center text-xs text-slate-500">
-              <span className="bg-slate-950 px-3 py-1 rounded-full border border-slate-800">
-                Model: {cardSet.model}
-              </span>
-              <span>Click card to reveal side</span>
+                <div className="my-auto text-center py-6">
+                  <p className="text-xl md:text-2xl font-semibold text-slate-100 leading-relaxed">
+                    {currentCard?.front}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center text-[10px] text-slate-500 pt-4 border-t border-slate-800/60">
+                  <span className="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 font-mono">
+                    Model: {cardSet.model}
+                  </span>
+                  <span>Side A</span>
+                </div>
+              </div>
+
+              {/* Back Side (Flipped) */}
+              <div className={`flex flex-col justify-between h-full space-y-6 ${isFlipped ? "block" : "hidden"}`}>
+                <div className="flex justify-between items-center text-[10px] font-bold text-indigo-400 uppercase tracking-widest">
+                  <span>Answer / Explanation</span>
+                  <span className="text-indigo-400 font-mono">Click to Flip ↺</span>
+                </div>
+
+                <div className="my-auto text-center py-6">
+                  <p className="text-xl md:text-2xl font-semibold text-indigo-200 leading-relaxed">
+                    {currentCard?.back}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center text-[10px] text-slate-500 pt-4 border-t border-slate-800/60">
+                  <span className="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 font-mono">
+                    Model: {cardSet.model}
+                  </span>
+                  <span className="text-indigo-400 font-bold">Side B</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2">
             <button
               onClick={() => {
                 setActiveCardIndex((prev) => Math.max(0, prev - 1));
                 setIsFlipped(false);
               }}
               disabled={activeCardIndex === 0}
-              className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-sm font-medium disabled:opacity-40"
+              className="px-5 py-2.5 glass-card hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-2xl text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               ← Previous
             </button>
@@ -218,9 +258,9 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
             <button
               onClick={() => handleGenerate(true)}
               disabled={generating}
-              className="px-4 py-2 bg-slate-900 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-600/10 rounded-xl text-xs font-semibold"
+              className="px-5 py-2.5 glass-card border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600/15 rounded-2xl text-xs font-semibold transition-all flex items-center gap-1.5"
             >
-              {generating ? "Regenerating..." : "🔄 Generate Again"}
+              <span>{generating ? "Regenerating..." : "🔄 Generate Again"}</span>
             </button>
 
             <button
@@ -229,7 +269,7 @@ export default function FlashcardsPage({ params }: { params: Promise<{ id: strin
                 setIsFlipped(false);
               }}
               disabled={activeCardIndex === cardSet.cards.length - 1}
-              className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-sm font-medium disabled:opacity-40"
+              className="px-5 py-2.5 glass-card hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-2xl text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               Next →
             </button>

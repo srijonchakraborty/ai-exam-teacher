@@ -29,45 +29,57 @@ export default function DocumentPage({ params }: { params: Promise<{ id: string 
   }, [id]);
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-500 text-sm">Loading Markdown document...</div>;
+    return <div className="text-center py-16 text-slate-500 text-xs animate-pulse">Loading Markdown document...</div>;
   }
 
   if (!docData) {
     return (
-      <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
-        <p className="text-slate-300 font-medium">Document not found</p>
-        <Link href="/library" className="text-xs text-indigo-400 underline">
-          Back to Library
+      <div className="text-center py-20 glass-card rounded-3xl space-y-4">
+        <p className="text-slate-300 font-semibold">Document not found</p>
+        <Link href="/library" className="text-xs text-indigo-400 hover:underline">
+          ← Back to Library
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{docData.userTitle}</h1>
-          <p className="text-slate-400 text-xs mt-1">
-            File: {docData.pdfName} • {docData.sourcePages} pages
+    <div className="space-y-8">
+      {/* Header Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 md:p-8 rounded-3xl border border-slate-800">
+        <div className="space-y-1">
+          <Link href="/library" className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider hover:underline">
+            ← Library
+          </Link>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white">{docData.userTitle}</h1>
+          <p className="text-slate-400 text-xs">
+            📄 {docData.pdfName} • {docData.sourcePages} pages • Model: {docData.modelUsed || "gpt-4o-mini"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div>
           <Link
             href={`/doc/${id}/flashcards`}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-all shadow-md flex items-center gap-2"
+            className="px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-semibold rounded-2xl shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2"
           >
-            <span>✨ Generate / View Flashcards</span>
+            <span>✨ Practice Flashcards</span>
+            <span>→</span>
           </Link>
         </div>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-xl">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 pb-2 border-b border-slate-800">
-          Markdown Content
-        </h2>
-        <div className="prose prose-invert max-w-none text-slate-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
-          {docData.markdown || "Markdown content is stored in external storage."}
+      {/* Markdown Reader Body */}
+      <div className="glass-card p-8 md:p-12 rounded-3xl space-y-6 shadow-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800/80">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            Synthesized Markdown Study Guide
+          </span>
+          <span className="text-[10px] px-3 py-1 bg-slate-950 text-indigo-400 rounded-full border border-slate-800 font-mono">
+            {docData.ocrUsed ? "Native + OCR Fallback" : "Native Text Layer"}
+          </span>
+        </div>
+
+        <div className="prose prose-invert max-w-none text-slate-200 font-mono text-sm leading-relaxed whitespace-pre-wrap selection:bg-indigo-500 selection:text-white">
+          {docData.markdown || "Markdown content is stored in external storage pointer."}
         </div>
       </div>
     </div>
